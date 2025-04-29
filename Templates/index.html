@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Fayl Tahrirlash</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1 class="title">Excel Fayl Tahrirlash 📊</h1>
+            
+            <form method="POST" action="/process" enctype="multipart/form-data" id="uploadForm">
+                <label class="custom-file-upload">
+                    <input type="file" name="file" id="fileInput" accept=".xlsx" required>
+                    Fayl tanlang
+                </label>
+                <p id="fileName">Fayl tanlanmadi</p>
+                <button type="submit">Tahrirlash va yuklab olish</button>
+            </form>
+            
+            <div class="stats">
+                <p>📅 Bugun tahrirlangan: <b id="todayCount">{{ stats.today }}</b></p>
+                <p>📈 Jami tahrirlangan: <b id="totalCount">{{ stats.total }}</b></p>
+                
+                <form method="POST" action="/" class="show-count-form" id="showCountForm">
+                    <label for="show_count">Ko'rsatish soni:</label>
+                    <select name="show_count" id="show_count">
+                        <option value="3" {% if show_count == 3 %}selected{% endif %}>3 ta</option>
+                        <option value="5" {% if show_count == 5 %}selected{% endif %}>5 ta</option>
+                        <option value="10" {% if show_count == 10 %}selected{% endif %}>10 ta</option>
+                    </select>
+                </form>
+            </div>
+            
+            <div class="recent-files">
+                <div class="recent-files-header">
+                    <h3>📂 So'nggi tahrirlangan fayllar:</h3>
+                    <div>
+                        <button type="button" id="clearFilesBtn" class="clear-btn">Fayllarni tozalash</button>
+                        <button type="button" id="resetStatsBtn" class="clear-btn" style="background: #ff5722; margin-left: 10px;">Statistikani tozalash</button>
+                    </div>
+                </div>
+                <div id="filesList">
+                    {% if files %}
+                    <ul>
+                        {% for file in files %}
+                        <li>
+                            <div class="file-info">
+                                <span class="file-name">{{ file.name }}</span>
+                                <span class="file-time">{{ file.time }}</span>
+                            </div>
+                            <div class="file-actions">
+                                <a href="/download/{{ file.name }}" class="download-btn">Yuklab olish</a>
+                                <a href="/preview/{{ file.preview_name }}" class="preview-btn" target="_blank">Ko'rish</a>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="no-files">Hozircha tahrirlangan fayllar mavjud emas</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const fileName = document.getElementById('fileName');
+            fileName.textContent = e.target.files[0] ? e.target.files[0].name : "Fayl tanlanmadi";
+        });
+
+        document.getElementById('show_count').addEventListener('change', function() {
+            fetch('/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `show_count=${this.value}`
+            })
+            .then(response => response.text())
+            .then(html => {
+                updateFilesList();
+            });
+        });
+
+        document.getElementById('clearFilesBtn').addEventListener('click', function() {
+            if(confirm("Barcha tahrirlangan fayllar o'chiriladi. Ishontiringiz komilmi?")) {
+                fetch('/clear_files', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        updateFilesList();
+                    } else {
+                        alert('Fayllarni tozalashda xato yuz berdi');
+                    }
+                });
+            }
+        });
+
+        document.getElementById('resetStatsBtn').addEventListener('click', function() {
+            if(confirm("Statistika tozalanadi. Bugungi va umumiy hisob 0 ga tushadi. Ishontiringiz komilmi?")) {
+                fetch('/reset_stats', {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.success) {
+                        updateStats();
+                    } else {
+                        alert('Statistikani tozalashda xato yuz berdi');
+                    }
+                });
+            }
+        });
+
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const fileInput = document.getElementById('fileInput');
+            const fileName = document.getElementById('fileName');
+            const submitButton = this.querySelector('button[type="submit"]');
+            
+            submitButton.disabled = true;
+            submitButton.textContent = "Ishlanmoqda...";
+            
+            fetch('/process', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    updateFilesList();
+                    updateStats();
+                    
+                    const link = document.createElement('a');
+                    link.href = `/download/${data.filename}`;
+                    link.click();
+                    
+                    setTimeout(() => {
+                        fileInput.value = '';
+                        fileName.textContent = "Fayl tanlanmadi";
+                        submitButton.disabled = false;
+                        submitButton.textContent = "Tahrirlash va yuklab olish";
+                    }, 2000);
+                } else {
+                    alert(`Xato: ${data.error}`);
+                    submitButton.disabled = false;
+                    submitButton.textContent = "Tahrirlash va yuklab olish";
+                }
+            })
+            .catch(error => {
+                alert(`Xato yuz berdi: ${error}`);
+                submitButton.disabled = false;
+                submitButton.textContent = "Tahrirlash va yuklab olish";
+            });
+        });
+
+        function updateFilesList() {
+            fetch('/get_updated_files')
+            .then(response => response.json())
+            .then(data => {
+                const filesList = document.getElementById('filesList');
+                
+                if(data.files && data.files.length > 0) {
+                    let html = '<ul>';
+                    data.files.forEach(file => {
+                        html += `
+                        <li>
+                            <div class="file-info">
+                                <span class="file-name">${file.name}</span>
+                                <span class="file-time">${file.time}</span>
+                            </div>
+                            <div class="file-actions">
+                                <a href="/download/${file.name}" class="download-btn">Yuklab olish</a>
+                                <a href="/preview/${file.preview_name}" class="preview-btn" target="_blank">Ko'rish</a>
+                            </div>
+                        </li>`;
+                    });
+                    html += '</ul>';
+                    filesList.innerHTML = html;
+                } else {
+                    filesList.innerHTML = '<p class="no-files">Hozircha tahrirlangan fayllar mavjud emas</p>';
+                }
+            });
+        }
+
+        function updateStats() {
+            fetch('/')
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                document.getElementById('todayCount').textContent = 
+                    doc.getElementById('todayCount').textContent;
+                document.getElementById('totalCount').textContent = 
+                    doc.getElementById('totalCount').textContent;
+            });
+        }
+    </script>
+</body>
+</html>

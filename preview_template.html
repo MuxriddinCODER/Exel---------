@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fayl Ko'rinishi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1e1e2f;
+            color: #fff;
+            padding: 20px;
+            line-height: 1.6;
+            margin: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+            margin-bottom: 30px;
+        }
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #2c2c3e;
+            color: white;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #444;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #3c3c4e;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #363646;
+        }
+        tr:hover {
+            background-color: #4c4c5e;
+        }
+        .info {
+            text-align: center;
+            margin-top: 30px;
+            color: #aaa;
+            font-size: 14px;
+            padding: 10px;
+            background: #2c2c3e;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Fayl Ko'rinishi</h1>
+        <div class="table-container">
+            {table}
+        </div>
+        <div class="info">
+            Sahifa avtomatik tarzda yaratilgan - {date}
+        </div>
+    </div>
+</body>
+</html>

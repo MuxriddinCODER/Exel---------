@@ -1,0 +1,57 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Excel Processor</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1 class="title">Excel 📊 Processor</h1>
+      <form method="POST" action="/process" enctype="multipart/form-data" id="uploadForm">
+        <label class="custom-file-upload">
+          <input type="file" name="file" id="fileInput" required />
+          Выберите файл
+        </label>
+        <p id="fileName">Файл не выбран</p>
+        <button type="submit">Обработать и скачать</button>
+      </form>
+      <div class="stats">
+        <p>📅 Сегодня обработано: <b>{{ stats.today }}</b></p>
+        <p>📈 Всего обработано: <b>{{ stats.total }}</b></p>
+      </div>
+
+      <div class="recent-files">
+        <h3>📂 Oxirgi tahrirlangan fayllar</h3>
+        <ul>
+          {% for file in files %}
+            <li>
+              {{ file }}
+              <a href="/open/{{ file }}" target="_blank">Ochilishi</a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+    const form = document.getElementById('uploadForm');
+  
+    fileInput.addEventListener('change', () => {
+      fileName.textContent = fileInput.files[0]?.name || "Файл не выбран";
+    });
+  
+    form.addEventListener('submit', () => {
+      setTimeout(() => {
+        location.reload(); // 5 soniyadan keyin yangilanadi
+      }, 2000);
+    });
+  </script>
+  
+</body>
+</html>
